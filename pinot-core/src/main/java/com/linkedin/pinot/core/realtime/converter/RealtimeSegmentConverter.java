@@ -17,6 +17,7 @@ package com.linkedin.pinot.core.realtime.converter;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.linkedin.pinot.common.data.Schema;
@@ -97,6 +98,8 @@ public class RealtimeSegmentConverter {
     genConfig.setTableName(tableName);
     genConfig.setOutDir(outputPath);
     genConfig.setSegmentName(segmentName);
+    genConfig.setRawIndexCreationColumns(Collections.singletonList("item"));
+
     final SegmentIndexCreationDriverImpl driver = new SegmentIndexCreationDriverImpl();
     driver.init(genConfig, reader);
     driver.build();

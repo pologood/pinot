@@ -112,6 +112,7 @@ public class SegmentIndexCreationDriverImpl implements SegmentIndexCreationDrive
     recordReader.init();
     dataSchema = recordReader.getSchema();
 
+    LOGGER.warn("nodictionary columns:{}", config.getRawIndexCreationColumns().toString());
     if (config.getHllConfig() != null) {
       HllConfig hllConfig = config.getHllConfig();
       // create hll index is true only if we're provided with columns to
