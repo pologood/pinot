@@ -23,8 +23,9 @@ import com.linkedin.pinot.common.metrics.ServerMetrics;
 import com.linkedin.pinot.common.query.QueryExecutor;
 import com.linkedin.pinot.common.query.QueryRequest;
 import com.linkedin.pinot.common.utils.DataTable;
-import com.linkedin.pinot.core.query.scheduler.SchedulerQueryContext;
 import com.linkedin.pinot.core.query.scheduler.QueryScheduler;
+import com.linkedin.pinot.core.query.scheduler.SchedulerQueryContext;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.commons.configuration.Configuration;
@@ -36,6 +37,7 @@ public class TokenBucketScheduler extends QueryScheduler {
   private static Logger LOGGER = LoggerFactory.getLogger(TokenBucketScheduler.class);
 
   private final SchedulerPriorityQueue queryQueue;
+  private final AtomicInteger pendingQuries = new AtomicInteger(0);
 
   public TokenBucketScheduler(@Nonnull Configuration schedulerConfig, QueryExecutor queryExecutor,
       ServerMetrics serverMetrics) {
@@ -52,11 +54,12 @@ public class TokenBucketScheduler extends QueryScheduler {
     queryResultFuture.addListener(new Runnable() {
       @Override
       public void run() {
-        // TODO: update scheduler post task completion
+        queryQueue.markTaskDone(schedulerQueryContext);
       }
     }, MoreExecutors.directExecutor());
-
+    pendingQuries.incrementAndGet();
     queryQueue.put(schedulerQueryContext);
+
     return queryResultFuture;
   }
 
@@ -68,6 +71,7 @@ public class TokenBucketScheduler extends QueryScheduler {
         while(true) {
           // TODO: wait for capacity and request to be available
           SchedulerQueryContext request = queryQueue.take();
+          pendingQuries.decrementAndGet();
           queryRunners.submit(request.getQueryFutureTask());
         }
       }

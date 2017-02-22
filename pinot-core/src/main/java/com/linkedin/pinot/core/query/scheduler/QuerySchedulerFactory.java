@@ -17,7 +17,9 @@
 package com.linkedin.pinot.core.query.scheduler;
 
 import com.google.common.base.Preconditions;
+import com.linkedin.pinot.common.metrics.ServerMetrics;
 import com.linkedin.pinot.common.query.QueryExecutor;
+import com.linkedin.pinot.core.query.scheduler.tokenbucket.TokenBucketScheduler;
 import javax.annotation.Nonnull;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
@@ -29,7 +31,7 @@ public class QuerySchedulerFactory {
   private static Logger LOGGER = LoggerFactory.getLogger(QuerySchedulerFactory.class);
 
   public static @Nonnull  QueryScheduler create(@Nonnull Configuration schedulerConfig,
-      @Nonnull QueryExecutor queryExecutor) {
+      @Nonnull QueryExecutor queryExecutor, ServerMetrics serverMetrics) {
     Preconditions.checkNotNull(schedulerConfig);
     Preconditions.checkNotNull(queryExecutor);
 
@@ -37,10 +39,13 @@ public class QuerySchedulerFactory {
 
     if (algorithm.equals("fcfs")) {
       LOGGER.info("Using FCFS query scheduler");
-      return new FCFSQueryScheduler(schedulerConfig, queryExecutor);
+      return new FCFSQueryScheduler(schedulerConfig, queryExecutor, serverMetrics);
+    } else if (algorithm.equals("tokenbucket")) {
+      LOGGER.info("Using Priority Token Bucket scheduler");
+      return new TokenBucketScheduler(schedulerConfig, queryExecutor, serverMetrics);
     }
 
     LOGGER.info("Using default FCFS query scheduler");
-    return new FCFSQueryScheduler(schedulerConfig, queryExecutor);
+    return new FCFSQueryScheduler(schedulerConfig, queryExecutor, serverMetrics);
   }
 }
