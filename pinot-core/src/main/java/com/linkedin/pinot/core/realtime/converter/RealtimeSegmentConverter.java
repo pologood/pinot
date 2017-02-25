@@ -39,9 +39,11 @@ public class RealtimeSegmentConverter {
   private String segmentName;
   private String sortedColumn;
   private List<String> invertedIndexColumns;
+  private List<String> noDictionaryColumns;
 
   public RealtimeSegmentConverter(RealtimeSegmentImpl realtimeSegment, String outputPath, Schema schema,
-      String tableName, String segmentName, String sortedColumn, List<String> invertedIndexColumns) {
+      String tableName, String segmentName, String sortedColumn, List<String> invertedIndexColumns,
+      List<String> noDictionaryColumns) {
     if (new File(outputPath).exists()) {
       throw new IllegalAccessError("path already exists:" + outputPath);
     }
@@ -70,11 +72,13 @@ public class RealtimeSegmentConverter {
     this.sortedColumn = sortedColumn;
     this.tableName = tableName;
     this.segmentName = segmentName;
+    this.noDictionaryColumns = noDictionaryColumns;
   }
 
   public RealtimeSegmentConverter(RealtimeSegmentImpl realtimeSegment, String outputPath, Schema schema,
       String tableName, String segmentName, String sortedColumn) {
-    this(realtimeSegment, outputPath, schema, tableName, segmentName, sortedColumn, new ArrayList<String>());
+    this(realtimeSegment, outputPath, schema, tableName, segmentName, sortedColumn, new ArrayList<String>(),
+        new ArrayList<String>());
   }
 
   public void build(SegmentVersion segmentVersion) throws Exception {
@@ -98,8 +102,9 @@ public class RealtimeSegmentConverter {
     genConfig.setTableName(tableName);
     genConfig.setOutDir(outputPath);
     genConfig.setSegmentName(segmentName);
-    genConfig.setRawIndexCreationColumns(Collections.singletonList("item"));
-
+    if (noDictionaryColumns != null) {
+      genConfig.setRawIndexCreationColumns(noDictionaryColumns);
+    }
     final SegmentIndexCreationDriverImpl driver = new SegmentIndexCreationDriverImpl();
     driver.init(genConfig, reader);
     driver.build();

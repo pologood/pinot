@@ -16,6 +16,7 @@
 
 package com.linkedin.pinot.controller.helix.core.realtime;
 
+import com.linkedin.pinot.common.config.IndexingConfig;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -558,6 +559,24 @@ public class PinotLLCRealtimeSegmentManager {
   protected int getRealtimeTableFlushSizeForTable(String tableName) {
     AbstractTableConfig tableConfig = ZKMetadataProvider.getRealtimeTableConfig(_propertyStore, tableName);
     return getRealtimeTableFlushSize(tableConfig);
+  }
+
+  public int getCommitTimeoutSeconds(String tableName) {
+    AbstractTableConfig tableConfig = ZKMetadataProvider.getRealtimeTableConfig(_propertyStore, tableName);
+    final Map<String, String> streamConfigs = tableConfig.getIndexingConfig().getStreamConfigs();
+    if (streamConfigs != null && streamConfigs.containsKey(
+        CommonConstants.Helix.DataSource.Realtime.SEGMENT_COMMIT_TIMEOUT_SECONDS)) {
+      final String commitTimeoutSecondsStr =
+          streamConfigs.get(CommonConstants.Helix.DataSource.Realtime.SEGMENT_COMMIT_TIMEOUT_SECONDS);
+      try {
+        return Integer.parseInt(commitTimeoutSecondsStr);
+      } catch (Exception e) {
+        LOGGER.warn("Failed to parse flush size of {}", commitTimeoutSecondsStr, e);
+        return -1;
+      }
+    }
+
+    return -1;
   }
 
   public static int getRealtimeTableFlushSize(AbstractTableConfig tableConfig) {
