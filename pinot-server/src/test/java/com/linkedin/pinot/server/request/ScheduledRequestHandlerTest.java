@@ -141,7 +141,7 @@ public class ScheduledRequestHandlerTest {
       }
 
       @Override
-      public void run() {
+      public void start() {
 
       }
     }, serverMetrics);
@@ -186,7 +186,7 @@ public class ScheduledRequestHandlerTest {
       }
 
       @Override
-      public void run() {
+      public void start() {
 
       }
     }, serverMetrics);

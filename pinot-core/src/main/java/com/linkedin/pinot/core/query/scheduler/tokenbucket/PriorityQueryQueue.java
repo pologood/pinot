@@ -46,17 +46,16 @@ public class PriorityQueryQueue implements SchedulerPriorityQueue {
   @Override
   public void put(@Nonnull SchedulerQueryContext query) {
     Preconditions.checkNotNull(query);
-
-    String tableName = query.getQueryRequest().getInstanceRequest().getQuery().getQuerySource().getTableName();
+    String tableName = query.getQueryRequest().getTableName();
+    queueLock.lock();
     try {
-      queueLock.lock();
       TableTokenAccount tableInfo = tableSchedulerInfo.get(tableName);
       if (tableInfo == null) {
-        tableInfo = tableSchedulerInfo.put(tableName, new TableTokenAccount(tableName, DEFAULT_TOKENS_PER_MS,
-            DEFAULT_TOKEN_LIFETIME_MS));
+        tableInfo = new TableTokenAccount(tableName, DEFAULT_TOKENS_PER_MS, DEFAULT_TOKEN_LIFETIME_MS);
+        tableSchedulerInfo.put(tableName, tableInfo);
       }
       tableInfo.getPendingQueries().add(query);
-      queryReaderCondition.notifyAll();
+      queryReaderCondition.signal();
     } finally {
       queueLock.unlock();
     }
@@ -88,10 +87,10 @@ public class PriorityQueryQueue implements SchedulerPriorityQueue {
     queueLock.lock();
     try {
       TableTokenAccount tableTokenAccount = tableSchedulerInfo.get(queryContext.getQueryRequest().getTableName());
-      if (tableTokenAccount == null) {
-        return;
+      if (tableTokenAccount != null) {
+        tableTokenAccount.markQueryEnd(queryContext.getMaxWorkerThreads());
       }
-      tableTokenAccount.markQueryEnd(queryContext.getMaxWorkerThreads());
+      // ignore if null
     } finally {
       queueLock.unlock();
     }
@@ -123,6 +122,11 @@ public class PriorityQueryQueue implements SchedulerPriorityQueue {
           selectedQuery = tableInfo.getPendingQueries().get(0);
         }
       }
+    }
+    if (selectedQuery != null) {
+      String selectedTable = selectedQuery.getQueryRequest().getTableName();
+      TableTokenAccount tableTokenAccount = tableSchedulerInfo.get(selectedTable);
+      tableTokenAccount.getPendingQueries().remove(0);
     }
     return selectedQuery;
   }

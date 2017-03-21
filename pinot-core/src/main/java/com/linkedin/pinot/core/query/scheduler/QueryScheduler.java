@@ -60,8 +60,8 @@ public abstract class QueryScheduler {
   public static final int DEFAULT_QUERY_WORKER_THREADS;
   private final ServerMetrics serverMetrics;
 
-  int numQueryRunnerThreads;
-  int numQueryWorkerThreads;
+  protected int numQueryRunnerThreads;
+  protected int numQueryWorkerThreads;
 
   // This executor service will run the "main" operation of query processing
   // including planning, distributing operators across threads, waiting and
@@ -136,7 +136,7 @@ public abstract class QueryScheduler {
 
   public abstract @Nonnull ListenableFuture<byte[]> submit(@Nullable QueryRequest queryRequest);
 
-  public abstract void run();
+  public abstract void start();
 
   public @Nonnull QueryExecutor getQueryExecutor() {
     return queryExecutor;
