@@ -19,7 +19,6 @@ import com.linkedin.thirdeye.detector.email.filter.AlertFilterFactory;
 import com.linkedin.thirdeye.detector.email.filter.AlertFilterEvaluationUtil;
 import com.linkedin.thirdeye.util.SeverityComputationUtil;
 
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -413,7 +412,7 @@ public class DetectionJobResource {
       replayStart = ISODateTimeFormat.dateTimeParser().parseDateTime(replayStartTimeIso);
       replayEnd = ISODateTimeFormat.dateTimeParser().parseDateTime(replayEndTimeIso);
     }
-    catch (DateTimeParseException e) {
+    catch (Exception e) {
       throw new WebApplicationException("Unable to parse strings, "+ replayStartTimeIso + " and " + replayEndTimeIso +
           ", in ISO DateTime format", e);
     }
